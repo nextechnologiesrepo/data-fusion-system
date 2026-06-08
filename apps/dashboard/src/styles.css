@@ -1,0 +1,40 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0f14;
+  --panel: #141b24;
+  --line: #243240;
+  --text: #d7e1ea;
+  --muted: #8aa0b2;
+  --ok: #3fb950;
+  --caution: #d29922;
+  --warning: #f85149;
+  --accent: #58a6ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); }
+.app { max-width: 1100px; margin: 0 auto; padding: 24px; }
+header { display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+h1 { font-size: 18px; margin: 0; }
+.subtitle { color: var(--muted); font-size: 12px; }
+.row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; flex: 1; min-width: 320px; }
+.panel h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+button { background: var(--accent); color: #04121f; border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+button:disabled { opacity: 0.5; cursor: default; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--ok); }
+.pill { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; border: 1px solid var(--line); color: var(--muted); margin: 1px; }
+.status-confirmed { color: var(--ok); }
+.status-tentative { color: var(--caution); }
+.status-dropped { color: var(--warning); }
+.sev-warning { color: var(--warning); }
+.sev-caution { color: var(--caution); }
+.sev-info { color: var(--muted); }
+.muted { color: var(--muted); }
+.err { color: var(--warning); font-size: 12px; }
+.metric { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; border-bottom: 1px dotted var(--line); }

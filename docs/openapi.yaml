@@ -1,0 +1,448 @@
+openapi: 3.0.3
+info:
+  title: Assured Edge Fusion and Confidence Fabric API
+  description: >
+    Internal API for an edge assurance/fusion layer. Submit observations, retrieve
+    fused tracks with confidence and provenance, submit operator feedback, run
+    deterministic replay, and retrieve evaluation metrics. Prototype on synthetic
+    data only; binds to 127.0.0.1 by default.
+  version: 0.0.1
+  license:
+    name: Proprietary
+servers:
+  - url: http://127.0.0.1:8088
+    description: Local-only default
+
+paths:
+  /health:
+    get:
+      summary: Liveness, version, uptime
+      operationId: getHealth
+      tags: [health]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+  /healthz:
+    get:
+      summary: Alias of /health
+      operationId: getHealthz
+      tags: [health]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/HealthResponse" } } } }
+  /readyz:
+    get:
+      summary: Readiness and live track count
+      operationId: getReady
+      tags: [health]
+      responses:
+        "200":
+          description: Ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready: { type: boolean }
+                  tracks: { type: integer }
+
+  /api/v1/sources:
+    get:
+      summary: List registered sources
+      operationId: listSources
+      tags: [sources]
+      responses:
+        "200":
+          description: Sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Source" }
+
+  /api/v1/observations:
+    post:
+      summary: Submit an observation (validate, rate-limit, fuse)
+      operationId: submitObservation
+      tags: [ingest]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Observation" }
+      responses:
+        "200":
+          description: Ingest outcome (may be accepted or rejected)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IngestResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+
+  /api/v1/tracks:
+    get:
+      summary: List fused tracks
+      operationId: listTracks
+      tags: [tracks]
+      responses:
+        "200":
+          description: Tracks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FusedTrack" }
+
+  /api/v1/tracks/{id}:
+    get:
+      summary: Get one fused track
+      operationId: getTrack
+      tags: [tracks]
+      parameters: [ { $ref: "#/components/parameters/TrackId" } ]
+      responses:
+        "200": { description: Track, content: { application/json: { schema: { $ref: "#/components/schemas/FusedTrack" } } } }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/tracks/{id}/provenance:
+    get:
+      summary: Provenance answers for a track
+      operationId: getProvenance
+      tags: [provenance]
+      parameters: [ { $ref: "#/components/parameters/TrackId" } ]
+      responses:
+        "200":
+          description: Provenance explanation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProvenanceResponse" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/tracks/{id}/confidence:
+    get:
+      summary: Confidence explanation for a track
+      operationId: getConfidence
+      tags: [confidence]
+      parameters: [ { $ref: "#/components/parameters/TrackId" } ]
+      responses:
+        "200":
+          description: Confidence explanation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfidenceExplanationResponse" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/feedback:
+    post:
+      summary: Submit operator feedback / override
+      operationId: submitFeedback
+      tags: [feedback]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeedbackRequest" }
+      responses:
+        "200": { description: Outcome, content: { application/json: { schema: { $ref: "#/components/schemas/IngestResponse" } } } }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/replay/start:
+    post:
+      summary: Run a scenario through a fresh engine
+      operationId: startReplay
+      tags: [replay]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scenario]
+              properties:
+                scenario: { type: string, example: scenario-01 }
+      responses:
+        "200":
+          description: Session + metrics
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReplayStartResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /api/v1/replay/stop:
+    post:
+      summary: Report the last replay result (v0 replay runs synchronously)
+      operationId: stopReplay
+      tags: [replay]
+      responses:
+        "200": { description: Last metrics, content: { application/json: { schema: { $ref: "#/components/schemas/MetricsResponse" } } } }
+
+  /api/v1/metrics:
+    get:
+      summary: Evaluation metrics from the last replay
+      operationId: getMetrics
+      tags: [replay]
+      responses:
+        "200": { description: Metrics, content: { application/json: { schema: { $ref: "#/components/schemas/MetricsResponse" } } } }
+
+components:
+  parameters:
+    TrackId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, example: trk-000001 }
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status: { type: string, example: ok }
+        version: { type: string }
+        schema_version: { type: integer }
+        uptime_ms: { type: integer }
+
+    SourceKind:
+      type: string
+      enum: [radar, eo_ir, ew_sigint, platform, operator]
+
+    Source:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        source_id: { type: string }
+        kind: { $ref: "#/components/schemas/SourceKind" }
+        name: { type: string }
+        reliability: { type: number, format: double }
+        registered_at: { type: integer, description: epoch milliseconds }
+
+    StateEstimate:
+      type: object
+      properties:
+        position: { type: array, items: { type: number }, minItems: 3, maxItems: 3 }
+        velocity: { type: array, items: { type: number }, minItems: 3, maxItems: 3 }
+        position_sigma_m: { type: number, format: double }
+
+    Signature:
+      type: object
+      properties:
+        algorithm: { type: string, example: none-v0 }
+        key_id: { type: string }
+        value: { type: string }
+
+    Observation:
+      type: object
+      required: [schema_version, observation_id, source_id, source_kind, observed_at, received_at, payload, measurement_confidence, signature]
+      properties:
+        schema_version: { type: integer }
+        observation_id: { type: string }
+        source_id: { type: string }
+        source_kind: { $ref: "#/components/schemas/SourceKind" }
+        observed_at: { type: integer, description: epoch milliseconds }
+        received_at: { type: integer, description: epoch milliseconds }
+        payload:
+          type: object
+          description: Tagged by `kind`; one of radar_track / eo_ir_detection / ew_emitter / platform_state / operator_override.
+          properties:
+            kind: { type: string }
+          additionalProperties: true
+        state:
+          nullable: true
+          allOf: [ { $ref: "#/components/schemas/StateEstimate" } ]
+        measurement_confidence: { type: number, format: double }
+        provenance_ref: { type: string, nullable: true }
+        signature: { $ref: "#/components/schemas/Signature" }
+
+    IngestResponse:
+      type: object
+      properties:
+        accepted: { type: boolean }
+        rejection: { type: string, nullable: true }
+        operation: { type: string, nullable: true, description: Created / Merged / ConflictPreserved / Updated / OperatorOverride }
+        track_id: { type: string, nullable: true }
+        provenance_id: { type: string, nullable: true }
+        cue:
+          nullable: true
+          allOf: [ { $ref: "#/components/schemas/RecommendationCue" } ]
+        note: { type: string, nullable: true }
+
+    ReasonCode:
+      type: string
+      enum: [single_source_only, multi_source_corroboration, stale_contribution, sensor_degraded, conflict_detected, operator_confirmed, operator_rejected, low_source_reliability, well_calibrated, calibration_drift]
+
+    ConfidenceComponents:
+      type: object
+      properties:
+        source_reliability: { type: number }
+        sensor_health: { type: number }
+        freshness: { type: number }
+        corroboration: { type: number }
+        conflict: { type: number }
+        calibration_score: { type: number }
+        operator_feedback: { type: number }
+
+    ConfidenceVector:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        computed_at: { type: integer }
+        score: { type: number, format: double }
+        uncertainty_band: { type: array, items: { type: number }, minItems: 2, maxItems: 2 }
+        reason_codes: { type: array, items: { $ref: "#/components/schemas/ReasonCode" } }
+        degradation_reason: { type: string, nullable: true }
+        calibration_status: { type: string, enum: [calibrated, drifting, uncalibrated] }
+        components: { $ref: "#/components/schemas/ConfidenceComponents" }
+
+    ConflictRecord:
+      type: object
+      properties:
+        observation_id: { type: string }
+        source_id: { type: string }
+        reason: { type: string }
+        divergence_m: { type: number }
+
+    FusedTrack:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        track_id: { type: string }
+        version: { type: integer }
+        created_at: { type: integer }
+        updated_at: { type: integer }
+        state: { $ref: "#/components/schemas/StateEstimate" }
+        confidence: { $ref: "#/components/schemas/ConfidenceVector" }
+        provenance_ref: { type: string }
+        contributing_observations: { type: array, items: { type: string } }
+        contributing_sources: { type: array, items: { type: string } }
+        conflicts: { type: array, items: { $ref: "#/components/schemas/ConflictRecord" } }
+        status: { type: string, enum: [tentative, confirmed, coasting, dropped] }
+
+    RecommendationCue:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        cue_id: { type: string }
+        track_id: { type: string }
+        created_at: { type: integer }
+        severity: { type: string, enum: [info, caution, warning] }
+        message: { type: string }
+        confidence_ref: { type: number }
+        recommended_action: { type: string }
+
+    ProvenanceRecord:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        provenance_id: { type: string }
+        track_id: { type: string }
+        fused_version: { type: integer }
+        created_at: { type: integer }
+        operation: { type: string, enum: [created, merged, updated, conflict_preserved, operator_override] }
+        contributing_observations: { type: array, items: { type: string } }
+        contributing_sources: { type: array, items: { type: string } }
+        confidence_before: { type: number, nullable: true }
+        confidence_after: { type: number }
+        notes: { type: string }
+        prev_provenance_id: { type: string, nullable: true }
+
+    ConfidenceImpact:
+      type: object
+      properties:
+        provenance_id: { type: string }
+        operation: { type: string }
+        sources: { type: array, items: { type: string } }
+        confidence_delta: { type: number }
+
+    ProvenanceDiff:
+      type: object
+      properties:
+        from_version: { type: integer }
+        to_version: { type: integer }
+        operation: { type: string }
+        added_observations: { type: array, items: { type: string } }
+        added_sources: { type: array, items: { type: string } }
+        confidence_delta: { type: number }
+        notes: { type: string }
+
+    ProvenanceResponse:
+      type: object
+      properties:
+        track_id: { type: string }
+        why_exists: { $ref: "#/components/schemas/ProvenanceRecord" }
+        contributing_observations: { type: array, items: { type: string } }
+        changed_since_previous:
+          nullable: true
+          allOf: [ { $ref: "#/components/schemas/ProvenanceDiff" } ]
+        sources_that_lowered_confidence: { type: array, items: { $ref: "#/components/schemas/ConfidenceImpact" } }
+        chain: { type: array, items: { $ref: "#/components/schemas/ProvenanceRecord" } }
+
+    ConfidenceExplanationResponse:
+      type: object
+      properties:
+        track_id: { type: string }
+        confidence: { $ref: "#/components/schemas/ConfidenceVector" }
+        sources_that_lowered_confidence: { type: array, items: { $ref: "#/components/schemas/ConfidenceImpact" } }
+
+    FeedbackRequest:
+      type: object
+      required: [track_id, operator_id, verdict]
+      properties:
+        track_id: { type: string }
+        operator_id: { type: string }
+        verdict: { type: string, enum: [confirm_track, reject_track, reclassify, adjust_confidence] }
+        note: { type: string }
+        confidence_adjustment: { type: number, nullable: true, description: "[-1,1] for adjust_confidence" }
+
+    ReplaySession:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        session_id: { type: string }
+        scenario_name: { type: string }
+        started_at: { type: integer }
+        finished_at: { type: integer, nullable: true }
+        deterministic: { type: boolean }
+        seed: { type: integer }
+        status: { type: string, enum: [pending, running, completed, aborted] }
+        event_count: { type: integer }
+
+    EvaluationMetric:
+      type: object
+      properties:
+        schema_version: { type: integer }
+        session_id: { type: string }
+        computed_at: { type: integer }
+        metric:
+          type: string
+          enum: [track_confirmation_latency_ms, false_track_rate, missed_track_rate, confidence_calibration_error, stale_data_rejection_count, conflict_rate, operator_override_rate, provenance_completeness]
+        value: { type: number }
+        unit: { type: string }
+        detail: { type: string }
+
+    ReplayStartResponse:
+      type: object
+      properties:
+        session: { $ref: "#/components/schemas/ReplaySession" }
+        track_count: { type: integer }
+        metrics: { type: array, items: { $ref: "#/components/schemas/EvaluationMetric" } }
+
+    MetricsResponse:
+      type: object
+      properties:
+        session:
+          nullable: true
+          allOf: [ { $ref: "#/components/schemas/ReplaySession" } ]
+        metrics: { type: array, items: { $ref: "#/components/schemas/EvaluationMetric" } }

@@ -1,0 +1,20 @@
+{
+  "name": "fusion-dashboard",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Minimal read-only operator view for the Assured Edge Fusion fabric",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}

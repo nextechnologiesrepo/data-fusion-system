@@ -1,0 +1,11 @@
+[package]
+name = "fusion-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Pluggable, explainable fusion engine for the assurance fabric"
+
+[dependencies]
+shared-types.workspace = true
+confidence-engine.workspace = true
+provenance-store.workspace = true

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "name": "two-target-crossing",
+  "seed": 1337,
+  "deterministic": true,
+  "ground_truth_tracks": 3,
+  "config": {
+    "staleness_limit_ms": 5000,
+    "freshness_horizon_ms": 10000,
+    "default_calibration_score": 0.8
+  },
+  "timeline": {
+    "start_ms": 10000,
+    "end_ms": 16000,
+    "step_ms": 1000
+  },
+  "sources": [
+    { "source_id": "radar-alpha", "kind": "radar", "reliability": 0.90, "name": "Radar Alpha" },
+    { "source_id": "radar-bravo", "kind": "radar", "reliability": 0.85, "name": "Radar Bravo" },
+    { "source_id": "eoir-charlie", "kind": "eo_ir", "reliability": 0.75, "name": "EO/IR Charlie" },
+    { "source_id": "radar-echo", "kind": "radar", "reliability": 0.88, "name": "Radar Echo" },
+    { "source_id": "ew-delta", "kind": "ew_sigint", "reliability": 0.60, "name": "EW Delta" },
+    { "source_id": "platform-own", "kind": "platform", "reliability": 0.95, "name": "Ownship PNT" },
+    { "source_id": "radar-stale", "kind": "radar", "reliability": 0.50, "name": "Radar Stale (laggy link)" }
+  ],
+  "health": [
+    { "source_id": "eoir-charlie", "status": "degraded", "health_score": 0.40, "detail": "sensor cooling fault, elevated noise" }
+  ],
+  "emitters": [
+    { "source_id": "radar-alpha", "kind": "radar", "seed": 11, "target": { "start": [1000.0, 5000.0, 200.0], "velocity": [-20.0, 5.0, 0.0] } },
+    { "source_id": "radar-bravo", "kind": "radar", "seed": 12, "target": { "start": [1000.0, 5000.0, 200.0], "velocity": [-20.0, 5.0, 0.0] } },
+    { "source_id": "eoir-charlie", "kind": "eoir", "seed": 13, "classification": "rotary-wing", "target": { "start": [1400.0, 5000.0, 200.0], "velocity": [-20.0, 5.0, 0.0] } },
+    { "source_id": "radar-echo", "kind": "radar", "seed": 14, "target": { "start": [-3000.0, 2000.0, 150.0], "velocity": [30.0, 0.0, 0.0] } },
+    { "source_id": "ew-delta", "kind": "ew_sigint", "seed": 15, "frequency_mhz": 9400.0, "target": { "start": [-3000.0, 2000.0, 150.0], "velocity": [30.0, 0.0, 0.0] } },
+    { "source_id": "platform-own", "kind": "platform", "seed": 16, "target": { "start": [0.0, 0.0, 0.0], "velocity": [12.0, 8.0, 0.0] } },
+    { "source_id": "radar-stale", "kind": "radar", "seed": 17, "observed_lag_ms": 8000, "target": { "start": [9000.0, 9000.0, 300.0], "velocity": [0.0, 0.0, 0.0] } }
+  ],
+  "feedback": [
+    { "at_ms": 14000, "track": "trk-000001", "operator": "op-watchstander-1", "verdict": "confirm_track", "note": "visual ID corroborates radar track" }
+  ]
+}

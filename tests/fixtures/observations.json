@@ -1,0 +1,28 @@
+[
+  {
+    "schema_version": 1,
+    "observation_id": "obs-fix-1",
+    "source_id": "radar-fixture",
+    "source_kind": "radar",
+    "observed_at": 1000,
+    "received_at": 1000,
+    "payload": { "kind": "radar_track", "range_m": 224.0, "bearing_deg": 26.5, "elevation_deg": 2.5, "radial_velocity_mps": 0.0 },
+    "state": { "position": [100.0, 200.0, 10.0], "velocity": [1.0, 0.0, 0.0], "position_sigma_m": 20.0 },
+    "measurement_confidence": 0.85,
+    "provenance_ref": null,
+    "signature": { "algorithm": "none-v0", "key_id": "unsigned", "value": "" }
+  },
+  {
+    "schema_version": 1,
+    "observation_id": "obs-fix-2",
+    "source_id": "eoir-fixture",
+    "source_kind": "eo_ir",
+    "observed_at": 1100,
+    "received_at": 1100,
+    "payload": { "kind": "eo_ir_detection", "bearing_deg": 27.0, "elevation_deg": 2.5, "classification": "fixed-wing", "pixel_intensity": 0.6 },
+    "state": { "position": [108.0, 203.0, 10.0], "velocity": [1.0, 0.0, 0.0], "position_sigma_m": 40.0 },
+    "measurement_confidence": 0.7,
+    "provenance_ref": null,
+    "signature": { "algorithm": "none-v0", "key_id": "unsigned", "value": "" }
+  }
+]
